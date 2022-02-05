@@ -1,0 +1,194 @@
+---
+title: "ML Prediction R"
+author: "Sem"
+date: "04/02/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+setwd("C:/Users/elsem/Desktop/M2 DSBA/R Mustahq/Project")
+```
+
+
+```{r}
+"https://www.kaggle.com/uciml/breast-cancer-wisconsin-data"
+
+"Attribute Information:
+
+1) ID number
+2) Diagnosis (M = malignant, B = benign)
+3-32)
+
+Ten real-valued features are computed for each cell nucleus:
+
+a) radius (mean of distances from center to points on the perimeter)
+b) texture (standard deviation of gray-scale values)
+c) perimeter
+d) area
+e) smoothness (local variation in radius lengths)
+f) compactness (perimeter^2 / area - 1.0)
+g) concavity (severity of concave portions of the contour)
+h) concave points (number of concave portions of the contour)
+i) symmetry
+j) fractal dimension (coastline approximation - 1)"
+
+
+```
+
+
+```{r include=FALSE}
+library(caret)
+library(tidyverse)
+library(vip)
+library(superml)
+```
+
+
+
+```{r}
+breast_cancer = read.csv('breast_cancer.csv', sep=",")
+```
+
+
+
+```{r}
+str(breast_cancer)
+```
+
+
+```{r}
+summary(breast_cancer)
+```
+
+
+```{r}
+breast_cancer = breast_cancer%>%select(-id,-X)
+```
+
+```{r}
+breast_cancer %>% apply(2, is.na) %>% apply(2,sum)%>% View()
+```
+
+```{r}
+
+table(breast_cancer$diagnosis)
+
+#encode = function(x){if (x=="M"){return(1)} else{return(0)}}
+#breast_cancer$diagnosis = unlist(lapply(breast_cancer$diagnosis,encode))
+
+#table(breast_cancer$diagnosis)
+
+```
+
+```{r}
+for (col in colnames(breast_cancer)[-1])
+{
+  boxplot(breast_cancer[,col] ~ breast_cancer$diagnosis, xlab = 'Malignant or Benign', ylab = col, main = paste(col,' x ', 'diagnosis') )
+}
+
+```
+
+
+```{r}
+intrain = createDataPartition(y = breast_cancer$diagnosis, p = 0.8, list = FALSE)
+
+training <- breast_cancer[intrain, ]
+testing <- breast_cancer[-intrain, ]
+
+```
+
+
+```{r}
+
+#Train a logistic regression
+model <- train(diagnosis ~ . , data = training, method = 'glm')
+summary(model)
+vip(model)
+
+predictions <- predict(model, testing)
+
+#plot tree
+plot(model$finalModel)
+
+confusionMatrix(factor(predictions), factor(testing$diagnosis))
+
+```
+
+
+
+```{r}
+
+#Train a lDT
+model <- train(diagnosis ~ . , data = training, method = 'rpart')
+summary(model)
+vip(model)
+
+predictions <- predict(model, testing)
+
+#plot tree
+plot(model$finalModel, uniform=TRUE, 
+     main="Classification Tree")
+
+text(model$finalModel, use.n=TRUE, all=TRUE, cex=.6)
+
+confusionMatrix(factor(predictions), factor(testing$diagnosis))
+
+```
+
+
+```{r}
+
+#Train a lrf
+model <- train(diagnosis ~ . , data = training, method = 'rf')
+summary(model)
+vip(model)
+
+predictions <- predict(model, testing)
+
+#plot tree
+plot(model$finalModel)
+
+confusionMatrix(factor(predictions), factor(testing$diagnosis))
+#$overall["Accuracy"]
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
